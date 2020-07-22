@@ -1,7 +1,9 @@
 {
     "require": {
         "slim/slim": "^4.0.0",
-        "php-di/php-di": "^6.2"
+        "php-di/php-di": "^6.2",
+        "doctrine/orm": "^2.7",
+        "doctrine/migrations": "^2.2.1"
     },
     "require-dev": {
         "league/event": "^2.2",

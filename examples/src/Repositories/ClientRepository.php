@@ -9,27 +9,25 @@
 
 namespace OAuth2ServerExamples\Repositories;
 
+use Doctrine\ORM\EntityManagerInterface;
 use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
 use OAuth2ServerExamples\Entities\ClientEntity;
 
 class ClientRepository implements ClientRepositoryInterface
 {
-    const CLIENT_NAME = 'My Awesome App';
-    const REDIRECT_URI = 'http://foo/bar';
+    private $em;
+
+    public function __construct(EntityManagerInterface $em)
+    {
+       $this->em = $em;
+    }
 
     /**
      * {@inheritdoc}
      */
     public function getClientEntity($clientIdentifier)
     {
-        $client = new ClientEntity();
-
-        $client->setIdentifier($clientIdentifier);
-        $client->setName(self::CLIENT_NAME);
-        $client->setRedirectUri(self::REDIRECT_URI);
-        $client->setConfidential();
-
-        return $client;
+        return $this->em->getRepository(ClientEntity::class)->find($clientIdentifier);
     }
 
     /**
@@ -37,24 +35,13 @@ class ClientRepository implements ClientRepositoryInterface
      */
     public function validateClient($clientIdentifier, $clientSecret, $grantType)
     {
-        $clients = [
-            'myawesomeapp' => [
-                'secret'          => \password_hash('abc123', PASSWORD_BCRYPT),
-                'name'            => self::CLIENT_NAME,
-                'redirect_uri'    => self::REDIRECT_URI,
-                'is_confidential' => true,
-            ],
-        ];
+        $client = $this->em->getRepository(ClientEntity::class)->find($clientIdentifier);
 
-        // Check if client is registered
-        if (\array_key_exists($clientIdentifier, $clients) === false) {
+        if ($client === null) {
             return false;
         }
 
-        if (
-            $clients[$clientIdentifier]['is_confidential'] === true
-            && \password_verify($clientSecret, $clients[$clientIdentifier]['secret']) === false
-        ) {
+        if ($client->isConfidential() && \password_verify($clientSecret, $client->getSecret()) === false) {
             return false;
         }
 

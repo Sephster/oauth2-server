@@ -9,19 +9,38 @@
 
 namespace OAuth2ServerExamples\Repositories;
 
+use Doctrine\ORM\EntityManagerInterface;
 use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
 use OAuth2ServerExamples\Entities\AccessTokenEntity;
+use OAuth2ServerExamples\Orm\Entities\AccessToken;
 
 class AccessTokenRepository implements AccessTokenRepositoryInterface
 {
+    private $em;
+
+    public function __construct(EntityManagerInterface $em)
+    {
+        $this->em = $em;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function persistNewAccessToken(AccessTokenEntityInterface $accessTokenEntity)
     {
-        // Some logic here to save the access token to a database
+        $accessToken = new AccessToken();
+
+        $accessToken->setId($accessTokenEntity->getIdentifier());
+        $accessToken->setUserId($accessTokenEntity->getUserIdentifier());
+        $accessToken->setClientId($accessTokenEntity->getClient()->getIdentifier());
+        $accessToken->setScopes($accessTokenEntity->getScopes()); // TODO: Convert to string!
+        $accessToken->setExpiryDateTime($accessTokenEntity->getExpiryDateTime());
+        $accessToken->setRevoked(false);
+
+        $this->em->persist($accessToken);
+        $this->em->flush();
     }
 
     /**
@@ -29,7 +48,11 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
      */
     public function revokeAccessToken($tokenId)
     {
-        // Some logic here to revoke the access token
+        $accessToken = $this->em->getRepository(AccessToken::class)->find($tokenId);
+
+        $accessToken->setRevoked(true);
+
+        $this->em->flush();
     }
 
     /**
@@ -37,7 +60,9 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
      */
     public function isAccessTokenRevoked($tokenId)
     {
-        return false; // Access token hasn't been revoked
+        $accessToken = $this->em->getRepository(AccessToken::class)->find($tokenId);
+
+        return $accessToken->getRevoked();
     }
 
     /**
@@ -45,13 +70,6 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
      */
     public function getNewToken(ClientEntityInterface $clientEntity, array $scopes, $userIdentifier = null)
     {
-        $accessToken = new AccessTokenEntity();
-        $accessToken->setClient($clientEntity);
-        foreach ($scopes as $scope) {
-            $accessToken->addScope($scope);
-        }
-        $accessToken->setUserIdentifier($userIdentifier);
-
-        return $accessToken;
+        return new AccessTokenEntity($clientEntity, $scopes, $userIdentifier);
     }
 }

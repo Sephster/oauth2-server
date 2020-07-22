@@ -17,4 +17,27 @@ use League\OAuth2\Server\Entities\Traits\TokenEntityTrait;
 class AccessTokenEntity implements AccessTokenEntityInterface
 {
     use AccessTokenTrait, TokenEntityTrait, EntityTrait;
+
+    private $revoked;
+
+    public function __construct(ClientEntityInterface $clientEntity, array $scopes, $userIdentifier)
+    {
+        $this->setClient($clientEntity);
+
+        foreach ($scopes as $scope) {
+            $this->addScope($scope);
+        }
+
+        $this->setUserIdentifier($userIdentifier);
+    }
+
+    public function setRevoked($revoked)
+    {
+        $this->revoked = $revoked;
+    }
+
+    public function getRevoked()
+    {
+        return $this->revoked;
+    }
 }
