@@ -72,7 +72,6 @@ class BearerTokenValidator implements AuthorizationValidatorInterface
             throw new RuntimeException('Public key is empty');
         }
 
-        // @phpstan-ignore-next-line
         $this->jwtConfiguration->setValidationConstraints(
             new LooseValidAt($clock, $this->jwtValidAtDateLeeway),
             new SignedWith(
