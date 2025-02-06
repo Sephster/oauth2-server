@@ -42,9 +42,7 @@ class BearerTokenValidator implements AuthorizationValidatorInterface
 
     private Configuration $jwtConfiguration;
 
-    public function __construct(private AccessTokenRepositoryInterface $accessTokenRepository, private ?DateInterval $jwtValidAtDateLeeway = null)
-    {
-    }
+    public function __construct(private AccessTokenRepositoryInterface $accessTokenRepository, private ?DateInterval $jwtValidAtDateLeeway = null) {}
 
     /**
      * Set the public key
@@ -74,6 +72,7 @@ class BearerTokenValidator implements AuthorizationValidatorInterface
             throw new RuntimeException('Public key is empty');
         }
 
+        // @phpstan-ignore-next-line
         $this->jwtConfiguration->setValidationConstraints(
             new LooseValidAt($clock, $this->jwtValidAtDateLeeway),
             new SignedWith(
